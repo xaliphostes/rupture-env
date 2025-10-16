@@ -1,0 +1,27 @@
+{
+    "name": "rupture-env",
+    "version": "1.0.0",
+    "main": "index.js",
+    "scripts": {
+        "build": "vite build",
+        "build:skip-check": "SKIP_TYPE_CHECK=true vite build",
+        "dev": "vite",
+        "preview": "vite preview",
+        "deploy": "npm run build && gh-pages -d dist"
+    },
+    "keywords": [],
+    "author": "",
+    "license": "MIT",
+    "description": "",
+    "dependencies": {
+        "@youwol/dataframe": "^0.1.0-wip",
+        "@youwol/geometry": "^0.1.3",
+        "@youwol/io": "^0.1.1-wip",
+        "@youwol/math": "^0.0.27-wip",
+        "typescript": "^5.9.3",
+        "vite": "^7.1.10"
+    },
+    "devDependencies": {
+        "@types/node": "^24.8.0"
+    }
+}
