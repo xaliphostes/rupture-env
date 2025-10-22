@@ -1,8 +1,13 @@
-import { createEmptySerie, DataFrame, IArray } from '@youwol/dataframe'
+import { createEmptySerie, DataFrame, IArray, Serie } from '@youwol/dataframe'
 import { vec } from '@youwol/math'
 import { Surface, fromTriangleToNode } from '@youwol/geometry'
 
-export function generateNormalsAndAreas(dataframe: DataFrame, atNode = true) {
+export type NormalsAndAreas = {
+    normals: Serie,
+    areas: Serie
+}
+
+export function generateNormalsAndAreas(dataframe: DataFrame, atNode = true): NormalsAndAreas {
     const surface = Surface.create(
         dataframe.series.positions,
         dataframe.series.indices,
@@ -27,9 +32,9 @@ export function generateNormalsAndAreas(dataframe: DataFrame, atNode = true) {
         const p1 = surface.nodes[ids[0]].pos
         const p2 = surface.nodes[ids[1]].pos
         const p3 = surface.nodes[ids[2]].pos
-        const v1 = vector(p1, p2) //as vec.Vector3
-        const v2 = vector(p1, p3) //as vec.Vector3
-        n.setItemAt(i, vec.cross(v1, v2))
+        const v1 = vector(p1, p2) as vec.Vector3
+        const v2 = vector(p1, p3) as vec.Vector3
+        n.setItemAt(i, vec.cross(v1, v2) as IArray)
         a.setItemAt(i, triangleArea3D(p1, p2, p3))
     })
 
