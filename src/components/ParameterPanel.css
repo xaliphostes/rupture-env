@@ -1,0 +1,77 @@
+.parameter-panel h2 {
+    font-size: 1.125rem;
+    margin: 0 0 1rem;
+    color: #2d3748;
+    font-weight: 600;
+}
+
+.param-group {
+    margin-bottom: 1.5rem;
+}
+
+.param-group h3 {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: #4a5568;
+    margin: 0 0 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.param-field {
+    margin-bottom: 1rem;
+}
+
+.param-field label {
+    display: flex;
+    flex-direction: column;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #2d3748;
+    gap: 0.25rem;
+}
+
+.param-field input {
+    margin-top: 0.25rem;
+    padding: 0.5rem;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    font-size: 0.875rem;
+    transition: border-color 0.2s;
+}
+
+.param-field input:focus {
+    outline: none;
+    border-color: #667eea;
+    box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+}
+
+.param-field input:disabled {
+    background: #f7fafc;
+    color: #a0aec0;
+    cursor: not-allowed;
+}
+
+.param-hint {
+    font-size: 0.75rem;
+    color: #718096;
+    font-style: italic;
+}
+
+.param-info {
+    background: #edf2f7;
+    padding: 0.75rem;
+    border-radius: 6px;
+    margin-top: 1rem;
+}
+
+.param-info p {
+    margin: 0;
+    font-size: 0.75rem;
+    color: #4a5568;
+    line-height: 1.4;
+}
+
+.param-info strong {
+    color: #2d3748;
+}
