@@ -1,5 +1,9 @@
 # Rupture envelop of fault system
 
+<p align="center">
+    <img src="screen.png" alt="drawing" width="600"/>
+</p>
+
 [Online demo](https://xaliphostes.github.io/rupture-env/)
 
 ## References

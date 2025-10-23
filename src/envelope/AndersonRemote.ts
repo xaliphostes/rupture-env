@@ -47,9 +47,9 @@ export class AndersonRemote {
     private init() {
         if (!this.dirty_) return;
 
-        this.parsers_[0].setFunction(this.SH_);
-        this.parsers_[1].setFunction(this.Sh_);
-        this.parsers_[2].setFunction(this.Sv_);
+        this.parsers_.push(new Parser(this.SH_))
+        this.parsers_.push(new Parser(this.Sh_))
+        this.parsers_.push(new Parser(this.Sv_))
 
         let ang = this.theta_ * Math.PI / 180.;
         let cos = Math.cos(ang);
