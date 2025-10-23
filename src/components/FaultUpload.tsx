@@ -58,6 +58,84 @@ const FaultUpload: React.FC<Props> = ({ envelope, onUploadComplete }) => {
         return { positions, indices };
     };
 
+    // --- GOCAD TSurf parser (ASCII) ---
+    const parseTSurf = (content: string): { positions: number[]; indices: number[] } => {
+        // Maps GOCAD vertex id -> 0-based point index in VTK arrays
+        const idToIndex = new Map();
+        const positions: number[] = [];         // flat xyz[]
+        const indices = [];   // triplets of point indices
+
+        // Some files use tabs / multiple spaces; normalize first
+        const lines = content.replace(/\r/g, '').split('\n');
+
+        // Helper to add a new point; returns its index
+        function addPointFrom(id: number, x: number, y: number, z: number) {
+            const idx = (positions.length / 3) | 0;
+            positions.push(+x, +y, +z);
+            idToIndex.set(id, idx);
+            return idx;
+        }
+
+        for (let raw of lines) {
+            const line = raw.trim();
+            if (!line || line.startsWith('#')) continue;
+
+            // Stop at END (optional)
+            if (line === 'END') break;
+
+            // VRTX / PVRTX id x y z [extras...]
+            // Examples:
+            //   VRTX 1 631326.8125  3613163.25  -564.97052
+            //   PVRTX 2 100.0 200.0 300.0 0 0 0
+            if (/^(VRTX|PVRTX)\s/i.test(line)) {
+                const parts = line.split(/\s+/);
+                // parts[0] = VRTX|PVRTX, parts[1]=id, [2]=x, [3]=y, [4]=z
+                if (parts.length >= 5) {
+                    const id = parseInt(parts[1], 10);
+                    const x = parseFloat(parts[2]);
+                    const y = parseFloat(parts[3]);
+                    const z = parseFloat(parts[4]);
+                    addPointFrom(id, x, y, z);
+                }
+                continue;
+            }
+
+            // ATOM newId refId  → duplicate coordinates of refId under newId
+            if (/^ATOM\s/i.test(line)) {
+                const parts = line.split(/\s+/);
+                if (parts.length >= 3) {
+                    const id = parseInt(parts[1], 10);
+                    const ref = parseInt(parts[2], 10);
+                    const refIdx = idToIndex.get(ref);
+                    if (refIdx !== undefined) {
+                        // Map new id to the SAME index (no duplicate coords)
+                        idToIndex.set(id, refIdx);
+                    }
+                }
+                continue;
+            }
+
+            // Triangle: TRGL a b c  (vertex ids)
+            if (/^TRGL\s/i.test(line)) {
+                const parts = line.split(/\s+/);
+                if (parts.length >= 4) {
+                    const a = idToIndex.get(parseInt(parts[1], 10));
+                    const b = idToIndex.get(parseInt(parts[2], 10));
+                    const c = idToIndex.get(parseInt(parts[3], 10));
+                    if (a !== undefined && b !== undefined && c !== undefined) {
+                        indices.push(a, b, c);
+                    }
+                }
+                continue;
+            }
+
+            // Borders / BStone etc. are ignored for surface geometry
+            // HEADER, GOCAD TSurf, TFACE, etc. are meta lines and can be skipped
+        }
+
+        return {positions, indices};
+    }
+
     const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
         const files = event.target.files;
         if (!files || files.length === 0) return;
@@ -78,6 +156,8 @@ const FaultUpload: React.FC<Props> = ({ envelope, onUploadComplete }) => {
                     parsedData = parseOBJ(content);
                 } else if (extension === 'stl') {
                     parsedData = parseSTL(content);
+                } else if (extension === 'ts' || extension === 'tsurf' || extension === 'gcd') {
+                    parsedData = parseTSurf(content);
                 } else {
                     console.warn(`Unsupported file type: ${extension}`);
                     continue;
@@ -152,13 +232,13 @@ const FaultUpload: React.FC<Props> = ({ envelope, onUploadComplete }) => {
                     ref={fileInputRef}
                     id="fault-file-input"
                     type="file"
-                    accept=".obj,.stl"
+                    accept=".obj,.stl,.ts,.gcd,.tsurf"
                     multiple
                     onChange={handleFileUpload}
                     disabled={isProcessing}
                     style={{ display: 'none' }}
                 />
-                <p className="upload-hint">Supported formats: OBJ, STL</p>
+                <p className="upload-hint">Supported formats: OBJ, STL, TS, TSURF, GCD</p>
             </div>
 
             {uploadedFiles.length > 0 && (

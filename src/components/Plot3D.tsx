@@ -48,9 +48,12 @@ const Plot3D: React.FC<Props> = ({ data, xAxis, yAxis, zAxis }) => {
         imageData.setDimensions(data.dimX, data.dimY, data.dimZ);
 
         // Calculate spacing based on axis ranges
-        const spacingX = (xAxis.max - xAxis.min) / (data.dimX - 1);
-        const spacingY = (yAxis.max - yAxis.min) / (data.dimY - 1);
-        const spacingZ = (zAxis.max - zAxis.min) / (data.dimZ - 1);
+        // const spacingX = (xAxis.max - xAxis.min) / (data.dimX - 1);
+        // const spacingY = (yAxis.max - yAxis.min) / (data.dimY - 1);
+        // const spacingZ = (zAxis.max - zAxis.min) / (data.dimZ - 1);
+        const spacingX = 1
+        const spacingY = 1
+        const spacingZ = 1
         imageData.setSpacing(spacingX, spacingY, spacingZ);
 
         imageData.setOrigin(xAxis.min, yAxis.min, zAxis.min);

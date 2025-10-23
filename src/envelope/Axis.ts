@@ -24,7 +24,7 @@ export class Axis {
     }
 
     update(i: number): void {
-        // this.env_[this.name_] = this.value(i)
-        (Reflect.set as any)(this.env_, this.name_, i);
+        (this.env_ as any)[this.name_] = this.value(i)
+        // (Reflect.set as any)(this.env_, this.name_, i);
     }
 }

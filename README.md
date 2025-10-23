@@ -1,7 +1,7 @@
 # Rupture envelop of fault system
 
 <p align="center">
-  <img src="media/screen.png" alt="Logo rosetta" width="600">
+    <img src="screen.png" alt="drawing" width="600"/>
 </p>
 
 [Online demo](https://xaliphostes.github.io/rupture-env/)
