@@ -5,15 +5,25 @@ export class Progress {
     private digits_ = 2
     private displayc_ = true
     private prefix_ = 'Realized'
+    private cancelled_ = false
 
     constructor(max: number, prefix?: string) {
         this.max_ = max
-        this.prefix_ = prefix??"Realized"
+        this.prefix_ = prefix ?? "Realized"
     }
 
     reset(max: number) {
         this.max_ = max
         this.cur_ = 0
+        this.cancelled_ = false
+    }
+
+    cancel() {
+        this.cancelled_ = true
+    }
+
+    isCancelled(): boolean {
+        return this.cancelled_
     }
 
     tick(V: number = 1) {

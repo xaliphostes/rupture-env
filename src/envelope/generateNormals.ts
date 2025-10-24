@@ -34,7 +34,7 @@ export function generateNormalsAndAreas(dataframe: DataFrame, atNode = true): No
         const p3 = surface.nodes[ids[2]].pos
         const v1 = vector(p1, p2) as vec.Vector3
         const v2 = vector(p1, p3) as vec.Vector3
-        n.setItemAt(i, vec.cross(v1, v2) as IArray)
+        n.setItemAt(i, cross(v1, v2) as IArray)
         a.setItemAt(i, triangleArea3D(p1, p2, p3))
     })
 
@@ -56,6 +56,18 @@ export function generateNormalsAndAreas(dataframe: DataFrame, atNode = true): No
 }
 
 // -------------------------------------------------------------
+
+
+const norm2 = (v: vec.Vector3) => v.reduce((acc, w) => acc + w ** 2, 0)
+const norm = (v: vec.Vector3) => Math.sqrt(norm2(v))
+
+const cross = (v: vec.Vector3, w: vec.Vector3): vec.Vector3 => {
+    const x = v[1] * w[2] - v[2] * w[1]
+    const y = v[2] * w[0] - v[0] * w[2]
+    const z = v[0] * w[1] - v[1] * w[0]
+    const l = Math.sqrt(x * x + y * y + z * z)
+    return [x / l, y / l, z / l] as vec.Vector3
+}
 
 const vector = (p1: vec.Vector3, p2: vec.Vector3) => {
     const x = p2[0] - p1[0]

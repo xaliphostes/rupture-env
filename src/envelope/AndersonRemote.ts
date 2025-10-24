@@ -44,6 +44,7 @@ export class AndersonRemote {
     private init() {
         if (!this.dirty_) return;
 
+        this.parsers_ = []  // ✓ Clear before adding
         this.parsers_.push(parse(this.SH_).compile())
         this.parsers_.push(parse(this.Sh_).compile())
         this.parsers_.push(parse(this.Sv_).compile())

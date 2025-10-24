@@ -1,12 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { RuptureEnvelope } from '../envelope/RuptureEnvelope';
-import { Progress } from '../envelope/Progress';
+import { AsyncRuptureEnvelope } from '../envelope/AsyncRuptureEnvelope';
 import ParameterPanel from './ParameterPanel';
 import AxisConfiguration from './AxisConfiguration';
 import FaultUpload from './FaultUpload';
 import Plot2D from './Plot2D';
 import Plot3D from './Plot3D';
+import ComputationModal from './ComputationModal';
 import './App.css';
+import { ProgressWithCallback } from '../envelope/ProgressWithCallback';
 
 export type AxisType = 'R' | 'theta' | 'friction' | 'cohesion' | 'lambda' | 'pressure' | 'poisson';
 
@@ -35,6 +37,14 @@ function App() {
     const [sampling, setSampling] = useState(10);
     const [isRunning, setIsRunning] = useState(false);
     const [results, setResults] = useState<any>(null);
+    
+    // Modal-specific state
+    const [showModal, setShowModal] = useState(false);
+    const [computationProgress, setComputationProgress] = useState(0);
+    const [totalSteps, setTotalSteps] = useState(0);
+    
+    // Ref to store the progress object for cancellation
+    const progressRef = useRef<ProgressWithCallback | null>(null);
 
     const [parameters, setParameters] = useState<Parameters>({
         friction: 0.6,
@@ -71,9 +81,18 @@ function App() {
 
     const [faultUploaded, setFaultUploaded] = useState(false);
 
+    const handleStop = () => {
+        if (progressRef.current) {
+            progressRef.current.cancel();
+            console.log('Stop requested by user');
+        }
+    };
+
     const handleRun = async () => {
         setIsRunning(true);
         setResults(null);
+        setShowModal(true);
+        setComputationProgress(0);
 
         try {
             // Apply parameters to envelope
@@ -98,25 +117,49 @@ function App() {
             // Set sampling
             envelope.setSampling(sampling);
 
-            // Create progress tracker
-            const progress = new Progress(
-                mode === '2D' ? Math.pow(sampling, 2) : Math.pow(sampling, 3),
-                'Computing'
-            );
+            // Calculate total steps
+            const steps = mode === '2D' ? Math.pow(sampling, 2) : Math.pow(sampling, 3);
+            setTotalSteps(steps);
 
-            // Run computation
+            // Create progress tracker with callback
+            const progress = new ProgressWithCallback(
+                steps,
+                'Computing',
+                (current: number) => {
+                    setComputationProgress(current);
+                },
+                5 // Report every 5%
+            );
+            
+            // Store progress ref for cancellation
+            progressRef.current = progress;
+
+            // Create async wrapper
+            const asyncEnvelope = new AsyncRuptureEnvelope(envelope);
+
+            // Run computation asynchronously - this allows UI updates!
             if (mode === '2D') {
-                envelope.run2D(progress);
-                setResults(envelope.square());
+                await asyncEnvelope.run2DAsync(progress);
+                if (!progress.isCancelled()) {
+                    setResults(envelope.square());
+                }
             } else {
-                envelope.run3D(progress);
-                setResults(envelope.cube());
+                await asyncEnvelope.run3DAsync(progress);
+                if (!progress.isCancelled()) {
+                    setResults(envelope.cube());
+                }
             }
-        } catch (error) {
-            console.error('Error running envelope:', error);
-            alert('Error running computation: ' + (error as Error).message);
+        } catch (error: any) {
+            if (error.message === 'Computation cancelled') {
+                console.log('Computation was cancelled');
+            } else {
+                console.error('Error running envelope:', error);
+                alert('Error running computation: ' + (error as Error).message);
+            }
         } finally {
             setIsRunning(false);
+            setShowModal(false);
+            progressRef.current = null;
         }
     };
 
@@ -232,6 +275,15 @@ function App() {
                     )}
                 </main>
             </div>
+
+            {/* Computation Modal */}
+            <ComputationModal
+                isOpen={showModal}
+                mode={mode}
+                progress={computationProgress}
+                totalSteps={totalSteps}
+                onStop={handleStop}
+            />
         </div>
     );
 }
