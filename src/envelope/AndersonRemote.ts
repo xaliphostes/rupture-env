@@ -1,6 +1,6 @@
 import { vec } from "@youwol/math";
 import { Matrix33 } from "./math";
-import { Parser } from "./Parser";
+import { EvalFunction, parse } from "mathjs";
 
 export class AndersonRemote {
     constructor(
@@ -25,11 +25,8 @@ export class AndersonRemote {
         const x = [0, 0, 0]
 
         for (let i = 0; i < 3; ++i) { // (dip, strike and nornal)
-            x[i] = this.parsers_[i].eval({
-                x: pos[0],
-                y: pos[1],
-                z: pos[2]
-            });
+            let scope = { x: pos[0], y: pos[1], z: pos[2] }
+            x[i] = this.parsers_[i].evaluate(scope);
         }
 
         let SH = x[0];
@@ -47,9 +44,9 @@ export class AndersonRemote {
     private init() {
         if (!this.dirty_) return;
 
-        this.parsers_.push(new Parser(this.SH_))
-        this.parsers_.push(new Parser(this.Sh_))
-        this.parsers_.push(new Parser(this.Sv_))
+        this.parsers_.push(parse(this.SH_).compile())
+        this.parsers_.push(parse(this.Sh_).compile())
+        this.parsers_.push(parse(this.Sv_).compile())
 
         let ang = this.theta_ * Math.PI / 180.;
         let cos = Math.cos(ang);
@@ -64,7 +61,7 @@ export class AndersonRemote {
     }
 
     private dirty_ = true
-    private parsers_: Parser[] = []
+    private parsers_: EvalFunction[] = []
     private rot = new Matrix33()
 }
 

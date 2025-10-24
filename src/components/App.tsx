@@ -49,23 +49,23 @@ function App() {
     });
 
     const [xAxis, setXAxis] = useState<AxisConfig>({
-        parameter: 'R',
+        parameter: 'friction',
         min: 0,
-        max: 3,
+        max: 1,
         reverse: false,
     });
 
     const [yAxis, setYAxis] = useState<AxisConfig>({
-        parameter: 'theta',
+        parameter: 'cohesion',
         min: 0,
-        max: 180,
+        max: 1,
         reverse: false,
     });
 
     const [zAxis, setZAxis] = useState<AxisConfig>({
-        parameter: 'friction',
+        parameter: 'theta',
         min: 0,
-        max: 1,
+        max: 180,
         reverse: false,
     });
 
