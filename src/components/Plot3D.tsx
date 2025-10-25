@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
-import '@kitware/vtk.js/Rendering/Profiles/Volume';
+import '@kitware/vtk.js/Rendering/Profiles/All';
+// import '@kitware/vtk.js/Rendering/Profiles/Geometry';
 
 import vtkFullScreenRenderWindow from '@kitware/vtk.js/Rendering/Misc/FullScreenRenderWindow';
 import vtkImageData from '@kitware/vtk.js/Common/DataModel/ImageData';
@@ -8,8 +9,10 @@ import vtkVolume from '@kitware/vtk.js/Rendering/Core/Volume';
 import vtkVolumeMapper from '@kitware/vtk.js/Rendering/Core/VolumeMapper';
 import vtkColorTransferFunction from '@kitware/vtk.js/Rendering/Core/ColorTransferFunction';
 import vtkPiecewiseFunction from '@kitware/vtk.js/Common/DataModel/PiecewiseFunction';
-import vtkOrientationMarkerWidget from '@kitware/vtk.js/Interaction/Widgets/OrientationMarkerWidget';
-import vtkAnnotatedCubeActor from '@kitware/vtk.js/Rendering/Core/AnnotatedCubeActor';
+
+import vtkCubeSource from '@kitware/vtk.js/Filters/Sources/CubeSource';
+import vtkActor from '@kitware/vtk.js/Rendering/Core/Actor';
+import vtkMapper from '@kitware/vtk.js/Rendering/Core/Mapper';
 
 import vtkCubeAxesActor from '@kitware/vtk.js/Rendering/Core/CubeAxesActor';
 import * as d3scale from 'd3-scale';
@@ -73,6 +76,7 @@ const Plot3D: React.FC<Props> = ({ data, xAxis, yAxis, zAxis }) => {
         const renderWindow = fullScreenRenderer.getRenderWindow();
         renderWindowRef.current = fullScreenRenderer;
 
+        
         // Create image data
         const imageData = vtkImageData.newInstance();
         imageData.setDimensions(data.dimX, data.dimY, data.dimZ);
@@ -114,6 +118,7 @@ const Plot3D: React.FC<Props> = ({ data, xAxis, yAxis, zAxis }) => {
         updateOpacityFunction(ofun, minVal, maxVal, params.opacityScale);
         ofunRef.current = ofun;
 
+        
         // Create volume with enhanced properties
         const volume = vtkVolume.newInstance();
         volume.setMapper(mapper);
@@ -127,17 +132,25 @@ const Plot3D: React.FC<Props> = ({ data, xAxis, yAxis, zAxis }) => {
         volume.getProperty().setDiffuse(params.diffuse);
         volume.getProperty().setSpecular(params.specular);
         volume.getProperty().setSpecularPower(params.specularPower);
-
         volumeRef.current = volume;
 
         // Add volume to renderer
         renderer.addVolume(volume);
 
+        // Set background
+        renderer.setBackground(0.75, 0.75, 0.75);
+
+        // Initial render
+        renderer.resetCamera();
+        renderWindow.render();
+        
+        
+
+
         // Add 3D axes with graduations
         const cubeAxes = vtkCubeAxesActor.newInstance();
         cubeAxes.setCamera(renderer.getActiveCamera());
         cubeAxes.setDataBounds(volume.getBounds());
-        console.log(volume.getBounds())
 
         // Replace ticks from axis 0
         function myGenerateTicks(dataBounds: [number, number]) {
@@ -148,50 +161,10 @@ const Plot3D: React.FC<Props> = ({ data, xAxis, yAxis, zAxis }) => {
             res.tickStrings[0] = res.ticks[0].map(format);
             return res;
         }
-        cubeAxes.setGenerateTicks(myGenerateTicks);
+        // cubeAxes.setGenerateTicks(myGenerateTicks);
         renderer.addActor(cubeAxes);
 
-        /*
-        // Add orientation marker
-        const axes = vtkAnnotatedCubeActor.newInstance();
-        axes.setDefaultStyle({
-            text: '+X',
-            fontStyle: 'bold',
-            fontFamily: 'Arial',
-            fontColor: 'white',
-            fontSizeScale: (res: number) => res / 2,
-            faceColor: '#667eea',
-            faceRotation: 0,
-            edgeThickness: 0.1,
-            edgeColor: 'white',
-            resolution: 400,
-        });
 
-        // Customize faces
-        axes.setXPlusFaceProperty({ text: getAxisLabel(xAxis, '+') });
-        axes.setXMinusFaceProperty({ text: getAxisLabel(xAxis, '-') });
-        axes.setYPlusFaceProperty({ text: getAxisLabel(yAxis, '+') });
-        axes.setYMinusFaceProperty({ text: getAxisLabel(yAxis, '-') });
-        axes.setZPlusFaceProperty({ text: getAxisLabel(zAxis, '+') });
-        axes.setZMinusFaceProperty({ text: getAxisLabel(zAxis, '-') });
-
-        const orientationWidget = vtkOrientationMarkerWidget.newInstance({
-            actor: axes,
-            interactor: renderWindow.getInteractor(),
-        });
-        orientationWidget.setEnabled(true);
-        orientationWidget.setViewportCorner(
-            vtkOrientationMarkerWidget.Corners.BOTTOM_LEFT
-        );
-        orientationWidget.setViewportSize(0.15);
-        orientationWidget.setMinPixelSize(100);
-        orientationWidget.setMaxPixelSize(300);
-        */
-
-        // Set background
-        renderer.setBackground(0.95, 0.95, 0.97);
-
-        // Initial render
         renderer.resetCamera();
         renderWindow.render();
 
