@@ -12,6 +12,7 @@ export default defineConfig({
     },
     build: {
         outDir: 'dist',
+        sourcemap: false,
         rollupOptions: {
             onwarn(warning, warn) {
                 // Suppress warnings from node_modules
@@ -23,22 +24,3 @@ export default defineConfig({
     }
 });
 
-
-// import { defineConfig } from 'vite';
-// import react from '@vitejs/plugin-react';
-
-// export default defineConfig({
-//     plugins: [react()],
-//     base: './src',
-//     build: {
-//         outDir: 'dist',
-//         sourcemap: true,
-//     },
-//     server: {
-//         port: 3000,
-//         open: true,
-//     },
-//     optimizeDeps: {
-//         include: ['@kitware/vtk.js'],
-//     },
-// });
