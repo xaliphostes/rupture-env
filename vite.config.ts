@@ -5,7 +5,7 @@ export default defineConfig({
     plugins: [react()],
     root: './',
     publicDir: 'public',
-    base: '/arch-platform/', // must match your GitHub repo name
+    base: '/rupture-env/', // must match your GitHub repo name
     // assetsInclude: ['**/*.ts'], // Tell Vite to treat .ts files in public as assets
     optimizeDeps: {
         include: ['@kitware/vtk.js'],
