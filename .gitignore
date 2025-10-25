@@ -2,3 +2,4 @@ node_modules
 tsconfig.tsbuildinfo
 vite.config.js
 .DS_Store
+dist
