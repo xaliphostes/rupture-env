@@ -1,7 +1,6 @@
 import { RuptureEnvelope } from "./RuptureEnvelope"
 
 export class Axis {
-
     constructor(
         protected env_: RuptureEnvelope,
         private name_: string,
@@ -15,6 +14,10 @@ export class Axis {
         this.n_ = n
     }
 
+    get min() {return this.min_}
+
+    get max() {return this.max_}
+
     value(i: number): number {
         if (this.reverse_) {
             return this.min_ + (this.n_ - 1 - i) * (this.max_ - this.min_) / (this.n_ - 1);
@@ -25,6 +28,5 @@ export class Axis {
 
     update(i: number): void {
         (this.env_ as any)[this.name_] = this.value(i)
-        // (Reflect.set as any)(this.env_, this.name_, i);
     }
 }

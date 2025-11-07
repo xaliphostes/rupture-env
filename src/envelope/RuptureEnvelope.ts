@@ -5,6 +5,7 @@ import { Progress } from './Progress';
 import { AndersonRemote } from './AndersonRemote';
 import { normalAndShearStress } from './utils';
 import { norm } from './math';
+import { concatSeries } from './concatSeries';
 
 export type Cube = {
     domain: number[],
@@ -29,18 +30,9 @@ export class RuptureEnvelope {
     }
 
     reset() {
-        this.normals_ = createEmptySerie({
-            Type: Array,
-            count: 1,
-            itemSize: 3,
-            shared: false,
-        })
-        this.areas_ = createEmptySerie({
-            Type: Array,
-            count: 1,
-            itemSize: 1,
-            shared: false,
-        })
+        this.normals_ = undefined
+        this.areas_ = undefined
+        this.max_area_ = Number.NEGATIVE_INFINITY
     }
 
     addFault(positions: Serie, indices: Serie) {
@@ -52,8 +44,24 @@ export class RuptureEnvelope {
         })
 
         const result: NormalsAndAreas = generateNormalsAndAreas(dataframe, false);
-        (this.normals_.array as number[]).concat(result.normals.array as number[]);
-        (this.areas_.array as number[]).concat(result.areas.array as number[]);
+
+        if (this.areas_ === undefined) {
+            this.areas_ = result.areas
+        }
+        else {
+            this.areas_ = concatSeries(this.areas_, result.areas)
+        }
+
+        if (this.normals_ === undefined) {
+            this.normals_ = result.normals
+        }
+        else {
+            this.normals_ = concatSeries(this.normals_, result.normals)
+        }
+
+        this.areas_.forEach(a => {
+            if (a > this.max_area_) this.max_area_ = a
+        })
     }
 
     setAxis(axe: string, name: string, min: number, max: number, reverse: boolean) {
@@ -110,17 +118,25 @@ export class RuptureEnvelope {
         progress.reset(total)
         this.setSampling(this.n_)
 
+        let MIN = Number.POSITIVE_INFINITY
+        let MAX = Number.NEGATIVE_INFINITY
+
         for (let i = 0; i < this.n_; ++i) {
             this.xAxis_.update(i)
             for (let j = 0; j < this.n_; ++j) {
                 this.yAxis_.update(j)
                 for (let k = 0; k < this.n_; ++k) {
                     this.zAxis_.update(k)
-                    this.cube_.domain[l++] = this.energy();
+                    const e = this.energy()
+                    this.cube_.domain[l++] = e
+                    if (e < MIN) MIN = e
+                    if (e > MAX) MAX = e
                     progress.tick();
                 }
             }
         }
+
+        console.log(`Min = ${MIN}, Max = ${MAX}`)
     }
 
     get friction() { return this.friction_ }
@@ -155,7 +171,7 @@ export class RuptureEnvelope {
 
     // ----------------------------------------------------------------
 
-    private energy() {
+    protected energy() {
         this.updateRemote() // if necessary...
 
         let W = 0;
@@ -168,7 +184,8 @@ export class RuptureEnvelope {
         // TODO: use the center (x,y,z) of each point
 
         let i = 0;
-        forEach([this.normals_, this.areas_], ([normal, area]: [[number, number, number], [number]]) => {
+        let nbr = 0
+        forEach([this.normals_ as any, this.areas_], ([normal, area]: [[number, number, number], [number]]) => {
             const s = this.remote_.stressAt([0, 0, 0] /*t.center()*/) // stress at triangle-center
             const { tn, ts } = normalAndShearStress(s, normal) // shear and normal stresses
             let tts = norm(ts);
@@ -177,14 +194,15 @@ export class RuptureEnvelope {
             if (tts > C) {
                 let Teff = (1. + Po) * Math.pow(tts - C, 2.); // Distortional Eff
                 let Seff = (1. - 2. * Po) * Math.pow(La * ttn, 2.); // Volumetric Eff
-                W += (Teff + Seff) * area[0] / this.max_area_; // Total energy weighted by the area
+                W += (Teff + Seff) * area / this.max_area_; // Total energy weighted by the area
+                nbr += area
             }
         })
 
-        return W;
+        return nbr / this.max_area_
     }
 
-    private updateRemote() {
+    protected updateRemote() {
         if (this.dirtyStress_) {
             this.remote_.SH = this.SH_
             this.remote_.Sh = this.Sh_
@@ -196,40 +214,30 @@ export class RuptureEnvelope {
 
     // -----------------------------------------------------------
 
-    private xAxis_ = new Axis(this, 'R', 10, 0, 3)
-    private yAxis_ = new Axis(this, 'theta', 10, 0, 180)
-    private zAxis_ = new Axis(this, 'friction', 10, 0, 1)
-    private n_ = 10
+    protected xAxis_ = new Axis(this, 'R', 10, 0, 3)
+    protected yAxis_ = new Axis(this, 'theta', 10, 0, 180)
+    protected zAxis_ = new Axis(this, 'friction', 10, 0, 1)
+    protected n_ = 10
 
-    private friction_ = 0;
-    private cohesion_ = 0;
-    private lambda_ = 0;
-    private pressure_ = 0;
-    private poisson_ = 0.25;
-    private R_ = 0
-    private SH_ = '0';
-    private Sh_ = '0';
-    private Sv_ = '1';
-    private theta_ = 0;
-    private dirtyStress_ = true
+    protected friction_ = 0;
+    protected cohesion_ = 0;
+    protected lambda_ = 0;
+    protected pressure_ = 0;
+    protected poisson_ = 0.25;
+    protected R_ = 0
+    protected SH_ = '0';
+    protected Sh_ = '0';
+    protected Sv_ = '1';
+    protected theta_ = 0;
+    protected dirtyStress_ = true
 
-    private max_area_ = 0
-    private remote_ = new AndersonRemote()
+    protected max_area_ = 0
+    protected remote_ = new AndersonRemote()
 
-    private normals_ = createEmptySerie({
-        Type: Array,
-        count: 1,
-        itemSize: 3,
-        shared: false,
-    })
-    private areas_ = createEmptySerie({
-        Type: Array,
-        count: 1,
-        itemSize: 1,
-        shared: false,
-    })
-
-    private cube_: Cube = { domain: [], dimX: 10, dimY: 10, dimZ: 10 }
-    private square_: Square = { domain: [], dimX: 10, dimY: 10 }
+    protected normals_: Serie | undefined = undefined
+    protected areas_: Serie | undefined = undefined
+    
+    protected cube_: Cube = { domain: [], dimX: 10, dimY: 10, dimZ: 10 }
+    protected square_: Square = { domain: [], dimX: 10, dimY: 10 }
 }
 

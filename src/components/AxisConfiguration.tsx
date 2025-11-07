@@ -14,7 +14,7 @@ interface Props {
 }
 
 const axisOptions: { value: AxisType; label: string; description: string }[] = [
-    { value: 'R', label: 'R - Stress Ratio', description: 'SH/Sv ratio' },
+    // { value: 'R', label: 'R - Stress Ratio', description: 'SH/Sv ratio' },
     { value: 'theta', label: 'θ - Orientation', description: 'Stress field rotation (°)' },
     { value: 'friction', label: 'μ - Friction', description: 'Friction coefficient' },
     { value: 'cohesion', label: 'C - Cohesion', description: 'Cohesive strength (MPa)' },
